@@ -1,0 +1,8 @@
+{
+  "app_name": "pdf-merger",
+  "app_display_name": "PDF Merger",
+  "app_version": "1.0.0",
+  "app_publisher": "charettep",
+  "app_exe_name": "pdf-merger.exe",
+  "app_setup_base_name": "pdf-merger-setup"
+}
