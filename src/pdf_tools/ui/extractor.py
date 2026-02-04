@@ -1,8 +1,10 @@
+import json
 import os
 import platform
 import shutil
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from tkinter import font as tkfont
 from typing import Callable
 
 from pdf_tools.extraction.engine import ExtractionOptions, extract_transactions, write_csv
@@ -14,13 +16,17 @@ class PdfExtractorWindow:
         self.on_close = on_close
         self.window = tk.Toplevel(parent)
         self.window.title("PDF Tools - Extract Data")
-        self.window.geometry("980x620")
-        self.window.minsize(820, 520)
+        self.window.geometry("1200x720")
+        self.window.minsize(960, 620)
         self.window.protocol("WM_DELETE_WINDOW", self.close)
 
         self.input_paths: list[str] = []
         self.extracted_rows: list[dict[str, str]] = []
+        self.processed_paths: set[str] = set()
         self._edit_entry: tk.Entry | None = None
+        self._config_path = os.path.join(
+            os.path.expanduser("~"), ".pdf-tools-ui.json"
+        )
 
         self._build_ui()
 
@@ -40,8 +46,26 @@ class PdfExtractorWindow:
         )
         self.input_label = tk.Label(controls, text="No files selected", anchor="w")
         self.input_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        tk.Button(controls, text="Choose PDFs", command=self.select_pdfs).pack(
+        tk.Button(controls, text="Add PDFs", command=self.select_pdfs).pack(
             side=tk.RIGHT
+        )
+
+        file_frame = tk.Frame(self.window)
+        file_frame.pack(fill=tk.X, padx=16, pady=(0, 6))
+
+        self.file_list = tk.Listbox(file_frame, height=4, selectmode=tk.EXTENDED)
+        self.file_list.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        file_scroll = ttk.Scrollbar(file_frame, orient="vertical", command=self.file_list.yview)
+        file_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.file_list.configure(yscrollcommand=file_scroll.set)
+
+        file_actions = tk.Frame(self.window)
+        file_actions.pack(fill=tk.X, padx=16, pady=(0, 6))
+        tk.Button(file_actions, text="Remove Selected", command=self.remove_selected_files).pack(
+            side=tk.LEFT
+        )
+        tk.Button(file_actions, text="Clear Files", command=self.clear_files).pack(
+            side=tk.LEFT, padx=8
         )
 
         options = tk.Frame(self.window)
@@ -143,6 +167,12 @@ class PdfExtractorWindow:
             action_row, text="Export CSV", command=self.export_csv, state=tk.DISABLED
         )
         self.export_button.pack(side=tk.LEFT, padx=8)
+        tk.Button(action_row, text="Fit Columns", command=self.fit_columns).pack(
+            side=tk.LEFT, padx=8
+        )
+        tk.Button(action_row, text="Clear Data", command=self.clear_data).pack(
+            side=tk.LEFT
+        )
         tk.Button(action_row, text="Dependencies Help", command=self.show_dependency_help).pack(
             side=tk.LEFT
         )
@@ -164,7 +194,7 @@ class PdfExtractorWindow:
         )
         for field in TRANSACTION_FIELDS:
             self.tree.heading(field, text=field)
-            self.tree.column(field, width=120, anchor="w")
+            self.tree.column(field, width=160, anchor="w", stretch=True)
 
         y_scroll = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         x_scroll = ttk.Scrollbar(table_frame, orient="horizontal", command=self.tree.xview)
@@ -182,6 +212,7 @@ class PdfExtractorWindow:
         self.status.pack(fill=tk.X, padx=16, pady=(0, 12))
 
         self.refresh_dependency_status()
+        self.load_column_widths()
 
     def select_pdfs(self) -> None:
         paths = filedialog.askopenfilenames(
@@ -190,7 +221,10 @@ class PdfExtractorWindow:
         )
         if not paths:
             return
-        self.input_paths = list(paths)
+        for path in paths:
+            if path not in self.input_paths:
+                self.input_paths.append(path)
+                self.file_list.insert(tk.END, path)
         if len(self.input_paths) == 1:
             label = os.path.basename(self.input_paths[0])
         else:
@@ -226,9 +260,14 @@ class PdfExtractorWindow:
             camelot_primary_flavor=self.camelot_flavor.get(),
         )
 
+        new_paths = [path for path in self.input_paths if path not in self.processed_paths]
+        if not new_paths:
+            messagebox.showinfo("No new PDFs", "No new PDFs to extract. Add more PDFs or clear data to re-run.")
+            return
+
         try:
             rows, notes = extract_transactions(
-                self.input_paths,
+                new_paths,
                 output_dir="",
                 combined_csv_path=None,
                 options=options,
@@ -237,9 +276,11 @@ class PdfExtractorWindow:
             messagebox.showerror("Extraction failed", f"Error: {exc}")
             return
 
-        self.extracted_rows = rows
-        self.populate_table(rows)
-        self.export_button.config(state=tk.NORMAL if rows else tk.DISABLED)
+        if rows:
+            self.extracted_rows.extend(rows)
+            self.append_rows(rows)
+            self.export_button.config(state=tk.NORMAL)
+        self.processed_paths.update(new_paths)
 
         summary = f"Extracted {len(rows)} rows."
         if notes:
@@ -339,6 +380,11 @@ class PdfExtractorWindow:
             values = [row.get(field, "") for field in TRANSACTION_FIELDS]
             self.tree.insert("", tk.END, values=values)
 
+    def append_rows(self, rows: list[dict[str, str]]) -> None:
+        for row in rows:
+            values = [row.get(field, "") for field in TRANSACTION_FIELDS]
+            self.tree.insert("", tk.END, values=values)
+
     def export_csv(self) -> None:
         if not self.extracted_rows:
             messagebox.showwarning("No data", "Run extraction before exporting.")
@@ -367,6 +413,76 @@ class PdfExtractorWindow:
             row = {field: values[index] if index < len(values) else "" for index, field in enumerate(TRANSACTION_FIELDS)}
             rows.append(row)
         return rows
+
+    def clear_data(self) -> None:
+        self.extracted_rows = []
+        self.processed_paths = set()
+        self.populate_table([])
+        self.export_button.config(state=tk.DISABLED)
+        self.status.config(text="Cleared extracted data")
+
+    def remove_selected_files(self) -> None:
+        selections = list(self.file_list.curselection())
+        if not selections:
+            return
+        for index in reversed(selections):
+            path = self.file_list.get(index)
+            self.file_list.delete(index)
+            if path in self.input_paths:
+                self.input_paths.remove(path)
+            self.processed_paths.discard(path)
+        self.update_file_label()
+
+    def clear_files(self) -> None:
+        self.input_paths = []
+        self.processed_paths = set()
+        self.file_list.delete(0, tk.END)
+        self.update_file_label()
+        self.extract_button.config(state=tk.DISABLED)
+
+    def update_file_label(self) -> None:
+        count = len(self.input_paths)
+        if count == 0:
+            label = "No files selected"
+        elif count == 1:
+            label = os.path.basename(self.input_paths[0])
+        else:
+            label = f"{count} files selected"
+        self.input_label.config(text=label)
+
+    def fit_columns(self) -> None:
+        font = tkfont.Font()
+        padding = 16
+        for field in TRANSACTION_FIELDS:
+            max_width = font.measure(field) + padding
+            for item_id in self.tree.get_children():
+                value = self.tree.set(item_id, field)
+                width = font.measure(value) + padding
+                if width > max_width:
+                    max_width = width
+            max_width = min(max(max_width, 120), 600)
+            self.tree.column(field, width=max_width)
+        self.save_column_widths()
+
+    def load_column_widths(self) -> None:
+        try:
+            with open(self._config_path, "r", encoding="utf-8") as handle:
+                data = json.load(handle)
+        except (OSError, json.JSONDecodeError):
+            return
+        widths = data.get("column_widths", {})
+        for field, width in widths.items():
+            if field in TRANSACTION_FIELDS and isinstance(width, int):
+                self.tree.column(field, width=width)
+
+    def save_column_widths(self) -> None:
+        widths = {field: self.tree.column(field, "width") for field in TRANSACTION_FIELDS}
+        data = {"column_widths": widths}
+        try:
+            with open(self._config_path, "w", encoding="utf-8") as handle:
+                json.dump(data, handle, indent=2)
+        except OSError:
+            pass
 
     def start_edit(self, event: tk.Event) -> None:
         if self._edit_entry is not None:
@@ -405,5 +521,6 @@ class PdfExtractorWindow:
         self._edit_entry = entry
 
     def close(self) -> None:
+        self.save_column_widths()
         self.window.destroy()
         self.on_close()
