@@ -1,1 +1,5 @@
 pypdf>=4.0.0
+pdfplumber>=0.11.0
+camelot-py>=0.11.0
+pytesseract>=0.3.10
+pdf2image>=1.17.0

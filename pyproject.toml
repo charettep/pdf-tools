@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf-tools"
+version = "1.1.0"
+description = "A minimalist GUI toolkit for common PDF workflows like merging and text extraction."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "charettep" }
+]
+dependencies = [
+  "pypdf",
+  "pdfplumber",
+  "camelot-py",
+  "pytesseract",
+  "pdf2image"
+]
+
+[project.scripts]
+pdf-tools = "pdf_tools.main:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

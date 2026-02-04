@@ -68,7 +68,7 @@ pyinstaller `
   --distpath "dist" `
   --workpath "build\\pyinstaller" `
   --specpath "build\\pyinstaller" `
-  "app.py"
+  "src\\pdf_tools\\main.py"
 Pop-Location
 
 Remove-Item -Path $versionFile -ErrorAction SilentlyContinue

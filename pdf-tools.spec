@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['app.py'],
+    ['src/pdf_tools/main.py'],
     pathex=[],
     binaries=[],
     datas=[],

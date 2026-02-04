@@ -14,5 +14,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+      - name: Import package
+        run: python -c "import pdf_tools.main"
       - name: Validate build metadata
         run: python scripts/validate-metadata.py

@@ -28,6 +28,6 @@ pyinstaller \
   --onefile \
   --name "$APP_NAME" \
   --windowed \
-  app.py
+  src/pdf_tools/main.py
 
 printf "\nBuild complete. Executable: dist/%s\n" "$APP_NAME"
