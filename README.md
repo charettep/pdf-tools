@@ -59,7 +59,7 @@ python -m venv .venv
 .\scripts\windows\build-win.ps1
 ```
 
-This creates `dist\pdf-merger.exe` and `dist\pdf-merger-setup.exe`.
+This creates `dist\pdf-tools.exe` and `dist\pdf-tools-setup.exe`.
 Ensure Inno Setup is installed and `ISCC.exe` is on PATH.
 
 ## Notes

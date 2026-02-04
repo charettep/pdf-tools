@@ -16,7 +16,7 @@ $FileVersionTuple = ($versionParts[0..3] -join ', ')
 
 python -m pip install -r (Join-Path $RepoRoot "requirements.txt") -r (Join-Path $RepoRoot "requirements-dev.txt")
 
-$versionFile = Join-Path $env:TEMP "pdf-merger-version-info.txt"
+$versionFile = Join-Path $env:TEMP "pdf-tools-version-info.txt"
 @"
 VSVersionInfo(
   ffi=FixedFileInfo(

@@ -1,14 +1,14 @@
 #define MyAppName "PDF Merger"
-#define MyAppExeName "pdf-merger.exe"
+#define MyAppExeName "pdf-tools.exe"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "charettep"
 #define MyAppURL ""
 #define MyAppId "{F4B1E63B-0A4F-4D4A-8E8D-9E7F63B52C3A}"
-#define MyAppSetupBaseName "pdf-merger-setup"
+#define MyAppSetupBaseName "pdf-tools-setup"
 ; Allow overriding the EXE path from the command line:
-; iscc /DMyAppExePath="C:\path\to\pdf-merger.exe" installer.iss
+; iscc /DMyAppExePath="C:\path\to\pdf-tools.exe" installer.iss
 #ifndef MyAppExePath
-  #define MyAppExePath "dist\\pdf-merger.exe"
+  #define MyAppExePath "dist\\pdf-tools.exe"
 #endif
 
 [Setup]

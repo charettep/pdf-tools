@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='pdf-merger',
+    name='pdf-tools',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

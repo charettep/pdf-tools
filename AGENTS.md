@@ -7,7 +7,7 @@
 - `scripts/linux/build-linux.sh` for Linux builds.
 - `scripts/windows/build-win.ps1` and `scripts/windows/installer.iss` for Windows builds.
 - `dist/` contains built artifacts (generated).
-- `pdf-merger.spec` is the PyInstaller spec file.
+- `pdf-tools.spec` is the PyInstaller spec file.
 - `.github/workflows/ci.yml` runs metadata validation in CI.
 
 ## Build, Test, and Development Commands
